@@ -1,0 +1,5 @@
+{
+  "name": "AI Multi-Modal Content Generator",
+  "description": "An AI-powered tool to generate comprehensive content packages including articles, video scripts, titles, and tags from a single topic. Features tone selection, style customization, and one-click format conversion, all grounded with up-to-date information from Google Search.",
+  "requestFramePermissions": []
+}
