@@ -2,7 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { InputPanel } from './components/InputPanel';
 import { OutputPanel } from './components/OutputPanel';
-import { Style, OutputTab, GeneratedContent, GroundingSource, StoryboardScene, AspectRatio } from './types';
+import { Style, OutputTab, GeneratedContent, GroundingSource, StoryboardScene, AspectRatio, Language } from './types';
 import { generateInitialContent, convertText, generateVideoStoryboard, generateTopicIdeas } from './services/geminiService';
 
 function App() {
@@ -11,6 +11,7 @@ function App() {
   const [personalStyle, setPersonalStyle] = useState<string>('');
   const [image, setImage] = useState<{ file: File, dataUrl: string, base64: string, mimeType: string } | null>(null);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>(AspectRatio.SixteenNine);
+  const [language, setLanguage] = useState<Language>(Language.English);
   
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [groundingSources, setGroundingSources] = useState<GroundingSource[]>([]);
@@ -62,7 +63,7 @@ function App() {
     setGeneratedIdeas([]);
 
     try {
-      const ideas = await generateTopicIdeas(ideaField);
+      const ideas = await generateTopicIdeas(ideaField, language);
       if (ideas.length === 0) {
         setIdeaError("Could not generate ideas. Try a different field.");
       } else {
@@ -74,7 +75,7 @@ function App() {
     } finally {
       setIsGeneratingIdeas(false);
     }
-  }, [ideaField]);
+  }, [ideaField, language]);
 
   const handleGenerate = useCallback(async () => {
     if (!topic.trim()) return;
@@ -88,7 +89,7 @@ function App() {
 
     try {
       const imagePart = image ? { inlineData: { data: image.base64, mimeType: image.mimeType } } : null;
-      const { content, groundingSources, finishReason } = await generateInitialContent(topic, style, personalStyle, imagePart);
+      const { content, groundingSources, finishReason } = await generateInitialContent(topic, style, personalStyle, imagePart, language);
       
       if (finishReason === 'SAFETY') {
         setError("The response was blocked due to safety concerns. Please adjust your topic or style.");
@@ -104,7 +105,7 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [topic, style, personalStyle, image]);
+  }, [topic, style, personalStyle, image, language]);
 
   const handleConvert = useCallback(async (target: 'script' | 'summary') => {
     if (!generatedContent) return;
@@ -119,7 +120,7 @@ function App() {
     setError(null);
 
     try {
-        const result = await convertText(sourceText, target);
+        const result = await convertText(sourceText, target, language);
         if (target === 'script') {
             setGeneratedContent(prev => prev ? { ...prev, script: result } : null);
             setActiveTab(OutputTab.Script);
@@ -133,7 +134,7 @@ function App() {
     } finally {
         setIsLoading(false);
     }
-  }, [generatedContent]);
+  }, [generatedContent, language]);
 
   const handleGenerateStoryboard = useCallback(async () => {
     if (!generatedContent?.script) return;
@@ -177,6 +178,8 @@ function App() {
         clearImage={clearImage}
         aspectRatio={aspectRatio}
         setAspectRatio={setAspectRatio}
+        language={language}
+        setLanguage={setLanguage}
         ideaField={ideaField}
         setIdeaField={setIdeaField}
         generatedIdeas={generatedIdeas}

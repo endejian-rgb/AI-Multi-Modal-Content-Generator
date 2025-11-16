@@ -19,6 +19,11 @@ export enum AspectRatio {
   NineSixteen = '9:16',
 }
 
+export enum Language {
+  English = 'English',
+  Chinese = 'Chinese',
+}
+
 export interface GeneratedContent {
   article: string;
   script: string;

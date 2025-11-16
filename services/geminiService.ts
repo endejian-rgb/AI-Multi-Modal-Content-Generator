@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Modality, Type } from "@google/genai";
-import { GeneratedContent, Style, StoryboardScene, AspectRatio } from '../types';
+import { GeneratedContent, Style, StoryboardScene, AspectRatio, Language } from '../types';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable not set");
@@ -24,7 +24,8 @@ export const generateInitialContent = async (
     topic: string, 
     style: Style, 
     personalStyle: string, 
-    imagePart: {inlineData: {data: string, mimeType: string}} | null
+    imagePart: {inlineData: {data: string, mimeType: string}} | null,
+    language: Language
 ) => {
   const styleDescription = {
     [Style.Informational]: "Objective, data-driven, and educational. Like a news report or encyclopedia entry.",
@@ -43,6 +44,7 @@ ${personalStyle}
 
   const prompt = `
 You are an expert content creator and SEO strategist. Your task is to generate a complete content package based on the user's topic and provided media. You MUST use Google Search to get up-to-date and accurate information for your response.
+You MUST write the entire response in ${language}.
 
 The user's topic is: "${topic}"
 ${imagePart ? "The user has also provided an image for context. Analyze it carefully." : ""}
@@ -94,12 +96,12 @@ Generate the following three sections, clearly separated by the specified markdo
   return { content, groundingSources, finishReason };
 };
 
-export const generateTopicIdeas = async (field: string): Promise<string[]> => {
+export const generateTopicIdeas = async (field: string, language: Language): Promise<string[]> => {
     if (!field.trim()) {
         return [];
     }
 
-    const prompt = `Generate 5 unique and engaging content topic ideas related to the field of '${field}'. The ideas should be suitable for blog posts or short videos.`;
+    const prompt = `Generate 5 unique and engaging content topic ideas related to the field of '${field}'. The ideas should be suitable for blog posts or short videos. The response must be in ${language}.`;
 
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
@@ -131,10 +133,10 @@ export const generateTopicIdeas = async (field: string): Promise<string[]> => {
     }
 }
 
-export const convertText = async (sourceText: string, targetFormat: 'script' | 'summary') => {
+export const convertText = async (sourceText: string, targetFormat: 'script' | 'summary', language: Language) => {
   const prompt = targetFormat === 'script' 
-    ? `Convert the following article into a concise and engaging video script. Include suggestions for visuals where appropriate, like "[Visual: ...]".\n\nArticle:\n${sourceText}`
-    : `Summarize the following video script into a well-structured image-text article suitable for a blog post.\n\nScript:\n${sourceText}`;
+    ? `Convert the following article into a concise and engaging video script. Include suggestions for visuals where appropriate, like "[Visual: ...]". The output script MUST be in ${language}.\n\nArticle:\n${sourceText}`
+    : `Summarize the following video script into a well-structured image-text article suitable for a blog post. The output article MUST be in ${language}.\n\nScript:\n${sourceText}`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
@@ -181,11 +183,13 @@ export const generateVideoStoryboard = async (script: string, aspectRatio: Aspec
 
     const scenePromises = scenes.map(async (scene) => {
         try {
+            const imagePrompt = `Generate a highly detailed and cinematic image for a video storyboard with a ${aspectRatio} aspect ratio. The image must visually represent the following scene. Be specific and descriptive with visual elements like camera angles (e.g., close-up, wide shot), lighting (e.g., soft light, dramatic shadows), composition, colors, and any characters' expressions or actions. Scene: "${scene.visual || scene.text}"`;
+
             const [imageResponse, audioResponse] = await Promise.all([
                 ai.models.generateContent({
                     model: 'gemini-2.5-flash-image',
                     contents: {
-                        parts: [{ text: `Create a cinematic, visually appealing image for a video with a ${aspectRatio} aspect ratio that illustrates the following concept: "${scene.visual || scene.text}"` }],
+                        parts: [{ text: imagePrompt }],
                     },
                     config: {
                         responseModalities: [Modality.IMAGE],
