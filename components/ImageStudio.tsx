@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { AspectRatio, InfographicGenerationResponse, ImageQuality, ImageStyle } from '../types';
 import { generateImageFromText, generateInfographicText } from '../services/geminiService';
@@ -38,7 +39,7 @@ const CopyButton: React.FC<{ text: string }> = ({ text }) => {
     );
 };
 
-const TextToImageStudio: React.FC<TextToImageStudioProps> = ({ initialPrompt, onClearInitialPrompt }) => {
+const TextToImageStudioComponent: React.FC<TextToImageStudioProps> = ({ initialPrompt, onClearInitialPrompt }) => {
     const [prompt, setPrompt] = useState('');
     const [aspectRatio, setAspectRatio] = useState<AspectRatio>(AspectRatio.SixteenNine);
     const [quality, setQuality] = useState<ImageQuality>(ImageQuality.Standard);
@@ -247,11 +248,14 @@ ${baseScript}
         </div>
     );
 };
+const TextToImageStudio = React.memo(TextToImageStudioComponent);
 
-const TextToInfographicStudio: React.FC<{
+interface TextToInfographicStudioProps {
     onGenerationSuccess: (script: string) => void;
     onGenerateImageClick: () => void;
-}> = ({ onGenerationSuccess, onGenerateImageClick }) => {
+}
+
+const TextToInfographicStudioComponent: React.FC<TextToInfographicStudioProps> = ({ onGenerationSuccess, onGenerateImageClick }) => {
     const [inputText, setInputText] = useState('');
     const [output, setOutput] = useState<InfographicGenerationResponse | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -375,14 +379,16 @@ const TextToInfographicStudio: React.FC<{
         </div>
     );
 };
+const TextToInfographicStudio = React.memo(TextToInfographicStudioComponent);
+
 
 export const ImageStudio: React.FC = () => {
     const [activeTab, setActiveTab] = useState<StudioTab>('text-to-image');
     const [infographicScriptForImage, setInfographicScriptForImage] = useState<string | null>(null);
 
-    const handleGenerateImageFromInfographic = () => {
+    const handleGenerateImageFromInfographic = useCallback(() => {
         setActiveTab('text-to-image');
-    };
+    }, []);
 
     const StudioTabButton: React.FC<{label: string, value: StudioTab, icon: 'image-studio' | 'infographic'}> = ({label, value, icon}) => (
         <button

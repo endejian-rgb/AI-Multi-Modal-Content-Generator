@@ -76,7 +76,7 @@ const SeoAnalysisModal: React.FC<{
     onClose: () => void, 
     analysis: SeoAnalysisResult | null,
     error: string | null 
-}> = ({ isOpen, onClose, analysis, error }) => {
+}> = React.memo(({ isOpen, onClose, analysis, error }) => {
     if (!isOpen) return null;
 
     const TrendIndicator: React.FC<{ trend: 'Rising' | 'Stable' | 'Falling' }> = ({ trend }) => {
@@ -122,7 +122,7 @@ const SeoAnalysisModal: React.FC<{
             </div>
         </div>
     );
-};
+});
 
 
 const OutputPanelComponent: React.FC<OutputPanelProps> = ({

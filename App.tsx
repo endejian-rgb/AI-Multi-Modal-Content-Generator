@@ -89,21 +89,21 @@ function App() {
     });
   };
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
         const dataUrl = URL.createObjectURL(file);
         const base64 = await fileToBase64(file);
         setImage({ file, dataUrl, base64, mimeType: file.type });
     }
-  };
+  }, []);
 
-  const clearImage = () => {
+  const clearImage = useCallback(() => {
     if (image) {
         URL.revokeObjectURL(image.dataUrl);
     }
     setImage(null);
-  };
+  }, [image]);
 
   const handleGenerateIdeas = useCallback(async () => {
     if (!ideaField.trim()) return;
