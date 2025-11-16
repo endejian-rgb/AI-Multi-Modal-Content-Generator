@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { GeneratedContent, OutputTab, GroundingSource, StoryboardScene } from '../types';
 import Loader from './Loader';
@@ -77,6 +76,8 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
   isGeneratingStoryboard,
   storyboardError,
 }) => {
+  const [isSourcesExpanded, setIsSourcesExpanded] = useState(false);
+
   const renderContent = () => {
     if (!generatedContent) return null;
 
@@ -170,19 +171,31 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
             </div>
             {groundingSources.length > 0 && (
                 <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-                    <h4 className="flex items-center text-sm font-semibold text-gray-700 mb-2">
-                        <Icon name="link" className="w-4 h-4 mr-2" />
-                        Sources from Google Search
-                    </h4>
-                    <ul className="space-y-1 text-sm">
-                        {groundingSources.map((source, index) => (
-                            source.web && <li key={index}>
-                                <a href={source.web.uri} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
-                                    {source.web.title || source.web.uri}
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
+                    <button 
+                        onClick={() => setIsSourcesExpanded(!isSourcesExpanded)}
+                        className="w-full flex justify-between items-center text-sm font-semibold text-gray-700"
+                        aria-expanded={isSourcesExpanded}
+                    >
+                        <span className="flex items-center">
+                            <Icon name="link" className="w-4 h-4 mr-2" />
+                            Sources from Google Search ({groundingSources.length})
+                        </span>
+                        <Icon 
+                            name="chevron-down" 
+                            className={`w-5 h-5 transition-transform ${isSourcesExpanded ? 'rotate-180' : ''}`} 
+                        />
+                    </button>
+                    {isSourcesExpanded && (
+                        <ul className="mt-3 space-y-1 text-sm animate-[fadeIn_0.3s_ease-out]">
+                            {groundingSources.map((source, index) => (
+                                source.web && <li key={index}>
+                                    <a href={source.web.uri} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
+                                        {source.web.title || source.web.uri}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
             )}
         </div>

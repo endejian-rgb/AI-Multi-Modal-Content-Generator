@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Style, GeneratedContent, AspectRatio } from '../types';
 import { Icon } from './Icons';
 
@@ -19,6 +19,13 @@ interface InputPanelProps {
   clearImage: () => void;
   aspectRatio: AspectRatio;
   setAspectRatio: (ratio: AspectRatio) => void;
+  ideaField: string;
+  setIdeaField: (field: string) => void;
+  generatedIdeas: string[];
+  setGeneratedIdeas: (ideas: string[]) => void;
+  isGeneratingIdeas: boolean;
+  handleGenerateIdeas: () => void;
+  ideaError: string | null;
 }
 
 export const InputPanel: React.FC<InputPanelProps> = ({
@@ -37,7 +44,16 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   clearImage,
   aspectRatio,
   setAspectRatio,
+  ideaField,
+  setIdeaField,
+  generatedIdeas,
+  setGeneratedIdeas,
+  isGeneratingIdeas,
+  handleGenerateIdeas,
+  ideaError,
 }) => {
+  const [showIdeaGenerator, setShowIdeaGenerator] = useState(false);
+
   return (
     <div className="w-full lg:w-1/3 xl:w-2/5 p-6 bg-white overflow-y-auto h-full space-y-6">
       <div className="flex items-center space-x-3">
@@ -46,7 +62,71 @@ export const InputPanel: React.FC<InputPanelProps> = ({
       </div>
       
       <div className="space-y-2">
-        <label htmlFor="topic" className="block text-sm font-medium text-gray-700">Topic or Source Material</label>
+        <div className="flex justify-between items-center">
+            <label htmlFor="topic" className="block text-sm font-medium text-gray-700">Topic or Source Material</label>
+            <button
+                onClick={() => setShowIdeaGenerator(!showIdeaGenerator)}
+                className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                title="Get topic ideas from AI"
+                aria-expanded={showIdeaGenerator}
+            >
+                <Icon name="idea" className="w-5 h-5" />
+                <span>Get Ideas</span>
+            </button>
+        </div>
+
+        {showIdeaGenerator && (
+            <div className="p-4 bg-gray-50 border rounded-md space-y-3 transition-all animate-[fadeIn_0.3s_ease-out]">
+                <label htmlFor="idea-field" className="block text-xs font-medium text-gray-600">Enter a general field (e.g., cooking, tech)</label>
+                <div className="flex space-x-2">
+                    <input
+                        id="idea-field"
+                        value={ideaField}
+                        onChange={(e) => setIdeaField(e.target.value)}
+                        placeholder="Your field of interest"
+                        className="flex-grow p-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 transition"
+                        disabled={isGeneratingIdeas}
+                    />
+                    <button
+                        onClick={handleGenerateIdeas}
+                        disabled={isGeneratingIdeas || !ideaField.trim()}
+                        className="px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center w-12"
+                    >
+                        {isGeneratingIdeas ? (
+                           <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        ) : 'Go'}
+                    </button>
+                </div>
+
+                {ideaError && <p className="text-xs text-red-600">{ideaError}</p>}
+                
+                {generatedIdeas.length > 0 && (
+                    <div className="pt-3 border-t space-y-2">
+                        <p className="text-xs font-medium text-gray-600">Click an idea to use it:</p>
+                        <ul className="space-y-1">
+                            {generatedIdeas.map((idea, index) => (
+                                <li key={index}>
+                                    <button
+                                        onClick={() => {
+                                            setTopic(idea);
+                                            setGeneratedIdeas([]);
+                                            setShowIdeaGenerator(false);
+                                        }}
+                                        className="w-full text-left text-sm p-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition-colors"
+                                    >
+                                        {idea}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
+        )}
+
         <textarea
           id="topic"
           value={topic}

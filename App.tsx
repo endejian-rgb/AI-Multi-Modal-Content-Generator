@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { InputPanel } from './components/InputPanel';
 import { OutputPanel } from './components/OutputPanel';
 import { Style, OutputTab, GeneratedContent, GroundingSource, StoryboardScene, AspectRatio } from './types';
-import { generateInitialContent, convertText, generateVideoStoryboard } from './services/geminiService';
+import { generateInitialContent, convertText, generateVideoStoryboard, generateTopicIdeas } from './services/geminiService';
 
 function App() {
   const [topic, setTopic] = useState<string>('');
@@ -22,6 +22,11 @@ function App() {
   const [storyboard, setStoryboard] = useState<StoryboardScene[] | null>(null);
   const [isGeneratingStoryboard, setIsGeneratingStoryboard] = useState<boolean>(false);
   const [storyboardError, setStoryboardError] = useState<string | null>(null);
+
+  const [ideaField, setIdeaField] = useState<string>('');
+  const [generatedIdeas, setGeneratedIdeas] = useState<string[]>([]);
+  const [isGeneratingIdeas, setIsGeneratingIdeas] = useState<boolean>(false);
+  const [ideaError, setIdeaError] = useState<string | null>(null);
 
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -48,6 +53,28 @@ function App() {
     }
     setImage(null);
   };
+
+  const handleGenerateIdeas = useCallback(async () => {
+    if (!ideaField.trim()) return;
+
+    setIsGeneratingIdeas(true);
+    setIdeaError(null);
+    setGeneratedIdeas([]);
+
+    try {
+      const ideas = await generateTopicIdeas(ideaField);
+      if (ideas.length === 0) {
+        setIdeaError("Could not generate ideas. Try a different field.");
+      } else {
+        setGeneratedIdeas(ideas);
+      }
+    } catch (e: any) {
+      console.error(e);
+      setIdeaError(e.message || 'An unexpected error occurred.');
+    } finally {
+      setIsGeneratingIdeas(false);
+    }
+  }, [ideaField]);
 
   const handleGenerate = useCallback(async () => {
     if (!topic.trim()) return;
@@ -150,6 +177,13 @@ function App() {
         clearImage={clearImage}
         aspectRatio={aspectRatio}
         setAspectRatio={setAspectRatio}
+        ideaField={ideaField}
+        setIdeaField={setIdeaField}
+        generatedIdeas={generatedIdeas}
+        setGeneratedIdeas={setGeneratedIdeas}
+        isGeneratingIdeas={isGeneratingIdeas}
+        handleGenerateIdeas={handleGenerateIdeas}
+        ideaError={ideaError}
       />
       <main className="flex-1 flex flex-col h-full">
          <OutputPanel

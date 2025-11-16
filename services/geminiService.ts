@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { GeneratedContent, Style, StoryboardScene, AspectRatio } from '../types';
 
 if (!process.env.API_KEY) {
@@ -93,6 +93,43 @@ Generate the following three sections, clearly separated by the specified markdo
   
   return { content, groundingSources, finishReason };
 };
+
+export const generateTopicIdeas = async (field: string): Promise<string[]> => {
+    if (!field.trim()) {
+        return [];
+    }
+
+    const prompt = `Generate 5 unique and engaging content topic ideas related to the field of '${field}'. The ideas should be suitable for blog posts or short videos.`;
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    ideas: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.STRING,
+                        }
+                    }
+                }
+            },
+        },
+    });
+
+    try {
+        const jsonText = response.text;
+        const result = JSON.parse(jsonText);
+        return result.ideas || [];
+    } catch (e) {
+        console.error("Failed to parse topic ideas JSON:", e);
+        // Attempt to return a graceful failure if the AI gives a text response instead of JSON
+        return [`Failed to get ideas. The AI said: ${response.text}`];
+    }
+}
 
 export const convertText = async (sourceText: string, targetFormat: 'script' | 'summary') => {
   const prompt = targetFormat === 'script' 
